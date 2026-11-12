@@ -6,7 +6,15 @@ terraform {
 }
 provider "aws" { region = var.region }
 variable "region" { default = "us-west-2" }
-variable "github_repository" { default = "TrainWithShubham/runbookops" }
+variable "github_repository" {
+  type        = string
+  default     = ""
+  description = "Explicit owner/repo to trust for deployment. Empty creates no GitHub deployment access."
+  validation {
+    condition     = var.github_repository == "" || can(regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", var.github_repository))
+    error_message = "Name your own GitHub owner/repo explicitly, or leave federation disabled."
+  }
+}
 variable "github_oidc_provider_arn" {
   type    = string
   default = ""
@@ -16,7 +24,7 @@ data "aws_partition" "current" {}
 locals {
   account      = data.aws_caller_identity.current.account_id
   state_bucket = "runbookops-state-${local.account}-${var.region}"
-  oidc_arn     = var.github_oidc_provider_arn != "" ? var.github_oidc_provider_arn : aws_iam_openid_connect_provider.github[0].arn
+  oidc_arn     = var.github_oidc_provider_arn != "" ? var.github_oidc_provider_arn : try(aws_iam_openid_connect_provider.github[0].arn, null)
   prefix       = "arn:${data.aws_partition.current.partition}"
 }
 resource "aws_s3_bucket" "state" {
@@ -71,7 +79,8 @@ resource "aws_iam_openid_connect_provider" "github" {
   tags           = { Project = "runbookops" }
 }
 resource "aws_iam_role" "deploy" {
-  name = "runbookops-github-deploy"
+  count = var.github_repository == "" ? 0 : 1
+  name  = "runbookops-github-deploy"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
@@ -92,7 +101,8 @@ resource "aws_iam_role" "deploy" {
   tags = { Project = "runbookops" }
 }
 resource "aws_iam_role_policy" "deploy" {
-  role = aws_iam_role.deploy.id
+  count = var.github_repository == "" ? 0 : 1
+  role  = aws_iam_role.deploy[0].id
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
@@ -253,4 +263,13 @@ resource "aws_iam_role_policy" "deploy" {
   })
 }
 output "state_bucket" { value = aws_s3_bucket.state.id }
-output "deploy_role_arn" { value = aws_iam_role.deploy.arn }
+output "deploy_role_arn" { value = try(aws_iam_role.deploy[0].arn, "") }
+
+moved {
+  from = aws_iam_role.deploy
+  to   = aws_iam_role.deploy[0]
+}
+moved {
+  from = aws_iam_role_policy.deploy
+  to   = aws_iam_role_policy.deploy[0]
+}

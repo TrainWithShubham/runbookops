@@ -33,7 +33,7 @@ def session(region):
     return boto3.Session(region_name=region)
 
 
-def configure(region):
+def configure(region, github_repository=None):
     sdk = session(region)
     config = Config(connect_timeout=10, read_timeout=30, retries={"total_max_attempts": 3})
     account = sdk.client("sts", config=config).get_caller_identity()["Account"]
@@ -68,8 +68,22 @@ def configure(region):
             (p["Arn"] for p in providers if p["Arn"].endswith("/token.actions.githubusercontent.com")), ""
         )
         bootstrap = ROOT / "infra/terraform/bootstrap/terraform.tfvars.json"
+        previous_bootstrap = json.loads(bootstrap.read_text()) if bootstrap.exists() else {}
+        selected_repository = (
+            github_repository
+            if github_repository is not None
+            else previous_bootstrap.get("github_repository", "")
+        )
         bootstrap.write_text(
-            json.dumps({"region": region, "github_oidc_provider_arn": existing}, indent=2) + "\n"
+            json.dumps(
+                {
+                    "region": region,
+                    "github_oidc_provider_arn": existing,
+                    "github_repository": selected_repository,
+                },
+                indent=2,
+            )
+            + "\n"
         )
         bootstrap.chmod(0o600)
     public = ROOT / ".state/presenter-public.pem"
@@ -280,7 +294,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--region", default="us-west-2")
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("configure")
+    configuration = commands.add_parser("configure")
+    configuration.add_argument(
+        "--github-repository",
+        help="Explicit owner/repo to trust for CI; omitted leaves CI federation disabled on a new setup",
+    )
     commands.add_parser("seed-logs")
     commands.add_parser("logs")
     image = commands.add_parser("publish")
@@ -291,7 +309,7 @@ def main():
     verify.add_argument("--runtime-arn")
     args = parser.parse_args()
     if args.command == "configure":
-        configure(args.region)
+        configure(args.region, args.github_repository)
     elif args.command == "publish":
         publish(args.region, args.tag)
     elif args.command == "logs":

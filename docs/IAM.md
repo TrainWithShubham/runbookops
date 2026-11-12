@@ -6,7 +6,7 @@ Terraform creates a dedicated runtime role scoped to the selected inference prof
 
 The optional CloudWatch connector receives `logs:FilterLogEvents` only for its configured project sample log group. No agent permission allows changing workloads or deleting AWS resources.
 
-The CI deployment role trusts only GitHub's `repo:TrainWithShubham/runbookops:environment:presenter` subject and STS audience. Configure that environment to accept `main` only. The role can publish/update this project; its `iam:PassRole` permission names only the runtime role and the AgentCore service. It cannot delete tables/runtimes through the automated deployment workflow. Account-wide discovery/create actions that cannot be expressed as an existing resource ARN are enumerated rather than granted as service wildcards.
+CI federation is opt-in. When you explicitly name your own repository, its deployment role trusts only that GitHub `repo:OWNER/REPO:environment:presenter` subject and the STS audience. New clones create no deployment role by default. Configure that environment to accept `main` only. The role can publish/update this project; its `iam:PassRole` permission names only the runtime role and the AgentCore service. It cannot delete tables/runtimes through the automated deployment workflow. Account-wide discovery/create actions that cannot be expressed as an existing resource ARN are enumerated rather than granted as service wildcards.
 
 ## Reproduce the baseline analysis
 

@@ -59,3 +59,9 @@ The audit found two fixable FastMCP advisories and an affected DiskCache depende
 A live check caught treating boto3 clients as context managers. Replaced that with explicit closing and strengthened the CloudWatch test to use a real botocore client/Stubber, not a fake context-manager contract. The optional connector reads only a configured /runbookops/ sample group, at most 20 events over 15 minutes; seeding is a separate operator action. Agent IAM permissions remain read-only for logs.
 
 Application coverage remains a separate scope from Terraform, container, native browser, and model reliability. Full-suite, cloud, browser, and CI results are recorded in the release verification record after their final runs. No source exclusions are added to satisfy the 100% gates.
+
+### Public bootstrap safety
+
+CI federation is opt-in for new installations. A public clone must not silently create an AWS deployment role trusting the original authors' GitHub repository. Bootstrap defaults to no GitHub role/provider, and the configure helper accepts an explicit --github-repository OWNER/REPO while preserving a previous explicit choice. The owner's existing TrainWithShubham/runbookops trust is retained through Terraform moved blocks, without recreating its role.
+
+A transient Docker push failed with a broken network pipe during a large layer upload. Dependency and embedding layers are now separated from frequently changing application files. This also reduces repeat upload/storage work. The build backend, Python base image, runtime dependencies, workflow actions, and scanner executable are pinned. NOTICE is included in both the package and image.

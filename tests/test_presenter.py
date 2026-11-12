@@ -7,9 +7,12 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import Mock
 
 import pytest
-from botocore.exceptions import EndpointConnectionError
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+
+pytest.importorskip("boto3")
+
+from botocore.exceptions import EndpointConnectionError
 
 from runbookops import cli, presenter
 from runbookops.api import create_app
