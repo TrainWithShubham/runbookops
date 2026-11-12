@@ -2,6 +2,11 @@ mock_provider "aws" {}
 
 run "local_bootstrap_has_no_ci_trust" {
   command = plan
+  variables {
+    github_repository        = ""
+    github_subject_prefix    = ""
+    github_oidc_provider_arn = ""
+  }
   assert {
     condition     = length(aws_iam_role.deploy) == 0 && length(aws_iam_role_policy.deploy) == 0 && length(aws_iam_openid_connect_provider.github) == 0
     error_message = "A public clone must not grant CI deployment access by default."

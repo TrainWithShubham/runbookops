@@ -31,7 +31,7 @@ Use regional services in us-west-2 and target $10/month hosting excluding infere
 - Native browser checks for the presenter harness, RAG cache visibility, saved work, approval, and both themes.
 - Terraform deployment/update/log adoption and no-change plans. Verify trusted CI deployment and package release. Record cleanup instructions and retained resources.
 
-Implementation is on release/presenter-mode until the working release is verified. Preserve the original main commit in history. Record decisions, failures, fixes, and evidence limits in DECISIONS.md and the verification record. No PR is required for this delivery.
+Implementation was developed on release/presenter-mode and fast-forwarded to main after the first checks passed. The original main commit remains in history. Record decisions, failures, fixes, and evidence limits in DECISIONS.md and the verification record. No PR is required for this delivery.
 
 ## Later
 

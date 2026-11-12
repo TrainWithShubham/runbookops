@@ -181,7 +181,7 @@ resource "aws_bedrockagentcore_agent_runtime" "app" {
     RUNBOOKOPS_CHECKPOINT_TABLE     = aws_dynamodb_table.checkpoints.name
     RUNBOOKOPS_OIDC_ISSUER          = "http://127.0.0.1:8000/oidc"
     RUNBOOKOPS_OIDC_AUDIENCE        = "runbookops"
-    RUNBOOKOPS_OIDC_PUBLIC_KEY      = replace(var.public_key, "\n", "\\n")
+    RUNBOOKOPS_OIDC_PUBLIC_KEY      = replace(trimspace(var.public_key), "\n", "\\n")
     RUNBOOKOPS_CLOUDWATCH_LOG_GROUP = var.cloudwatch_log_group
   }
   lifecycle {

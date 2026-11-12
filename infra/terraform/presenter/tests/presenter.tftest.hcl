@@ -28,6 +28,7 @@ variables {
 }
 run "foundation_has_no_runtime_before_image" {
   command = plan
+  variables { image_uri = "" }
   assert {
     condition     = length(aws_bedrockagentcore_agent_runtime.app) == 0
     error_message = "Bootstrap must not create a runtime with an absent image."

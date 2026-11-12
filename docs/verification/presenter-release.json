@@ -1,6 +1,6 @@
 {
   "version": "2.1.0",
-  "recorded_at": "2026-11-12T13:02:06.526913+00:00",
+  "recorded_at": "2026-11-12T13:25:05.431927+00:00",
   "python_tests": 156,
   "python_application_coverage": {
     "statements_percent": 100,
@@ -17,10 +17,10 @@
     "lines_percent": 100
   },
   "offline_evaluations_passed": 13,
-  "terraform_tests_passed": 4,
+  "terraform_tests_passed": 6,
   "container_restart_approval_smoke": true,
   "agentcore_live_smoke": {
-    "verified_at": "2026-11-12T12:51:03.912174+00:00",
+    "verified_at": "2026-11-12T13:22:53.982527+00:00",
     "backend": "agentcore",
     "denied_viewer": true,
     "verified_http_status": 200,
@@ -39,8 +39,8 @@
       "prepare_change",
       "read_cloudwatch_logs"
     ],
-    "incident_id": "gada-83673c2ec4f2",
-    "model_calls": 2
+    "incident_id": "gada-b73a7d502941",
+    "model_calls": 3
   },
   "safari_observations": [
     "recovered cloud incident, stored approval and HTTP 200",
@@ -57,7 +57,55 @@
   "limits": [
     "Live model checks are samples, not a reliability benchmark.",
     "Moto, contract tests and JSDOM cover their documented scopes.",
-    "Phone-sized layouts and other native browsers were not rechecked.",
-    "GitHub CI/deployment and package release status are recorded after publication."
-  ]
+    "Phone-sized layouts and other native browsers were not rechecked."
+  ],
+  "cloudwatch_live_read": {
+    "source": "aws-cloudwatch",
+    "demo_only": true,
+    "event_count": 1,
+    "bounded_log_group": "/runbookops/presenter-sample",
+    "truncated": true,
+    "model_calls": 6,
+    "service_http_status": 503,
+    "fix_prepared": false
+  },
+  "github_checks": {
+    "commit": "57759fe",
+    "application": {
+      "url": "https://github.com/TrainWithShubham/runbookops/actions/runs/43225088696",
+      "conclusion": "success",
+      "python_versions": [
+        "3.11",
+        "3.12",
+        "3.13"
+      ]
+    },
+    "security": {
+      "url": "https://github.com/TrainWithShubham/runbookops/actions/runs/43225088714",
+      "conclusion": "success"
+    }
+  },
+  "aws_deployment": {
+    "url": "https://github.com/TrainWithShubham/runbookops/actions/runs/43225980070",
+    "conclusion": "success",
+    "backend_source_commit": "7f325ad",
+    "runtime_version": "5",
+    "image_digest": "sha256:f9c6dd117c890cebedda542db7110c2abf7f216cc6cc7196eae791eb42c93956",
+    "fixable_high_critical_image_findings": 0,
+    "terraform_no_change_plans": [
+      "bootstrap",
+      "presenter",
+      "logs"
+    ]
+  },
+  "clean_install": {
+    "aws_extra": false,
+    "offline_approved_recovery_http_status": 200
+  },
+  "github_repository_controls": {
+    "native_secret_scanning": true,
+    "push_protection": true,
+    "vulnerability_alerts": true,
+    "private_vulnerability_reporting": true
+  }
 }
