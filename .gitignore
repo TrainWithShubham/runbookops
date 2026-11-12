@@ -44,3 +44,14 @@ CLAUDE.md
 .coverage*
 htmlcov/
 node_modules/
+
+# Terraform state, plans, and local account configuration
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+!*.example.tfvars
+!*.example.tfvars.json
+crash.log

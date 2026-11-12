@@ -26,3 +26,11 @@ Local state uses SQLite for operations and a separate SQLite LangGraph checkpoin
 AgentCore Runtime hosts this code. Its managed Harness is a separate alternative orchestration loop powered by Strands. The cloud demo uses Bedrock inference; learner applications use individual OpenRouter keys. The instructor's credits and credentials are never distributed to learners.
 
 The simulator represents a payment dependency through state and log fixtures. It does not make a real payment request. That keeps failure injection repeatable while teaching the evidence, authorization, and recovery boundaries.
+
+## Presenter backend
+
+`runbookops present` serves the browser locally and forwards an allowlisted HTTP envelope to the runtime through the AWS SDK. Its static shell and demo issuer are local; its harness inspection, RAG, MCP discovery, incident state, and proposal decisions come from the cloud agent. A separate streaming operation wraps the shared event generator in SSE for AgentCore; the local bridge translates it back to the UI's NDJSON contract. The bridge creates no duplicate local agent or retrieval index.
+
+IAM authenticates invocation. A scoped demo JWT is added before signing using a per-call context variable, preventing concurrent requests from mixing identities. The runtime validates the forwarded token and applies its normal route authorization/schema checks. Investigation and decision invocations use fresh session IDs; DynamoDB rather than process memory preserves approval state across them. Read-only inspection and RAG searches reuse a serialized, per-identity/scopes session to preserve the warm retrieval cache without mixing callers.
+
+The local presenter has persistent per-runtime daily admission and one active investigation. These limits do not govern a separate IAM client invoking the runtime directly. Model/tool budgets are still enforced inside the engine. See [AWS deployment](AWS.md) and [cost limits](COSTS.md).

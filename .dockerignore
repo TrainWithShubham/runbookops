@@ -9,3 +9,12 @@ __pycache__
 .pytest_cache
 .ruff_cache
 module-*
+node_modules
+**/.terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.coverage*
+dist
+build

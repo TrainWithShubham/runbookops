@@ -50,3 +50,13 @@ Successful scenario summaries are saved to `artifacts/live-bedrock`. Test failur
 Open the instructor Bedrock app on port 8004. Use the four starter examples, then inspect the technical System prompt, Model, MCP tools, RAG, Approval, and Execute components. Verify a viewer's denial and an authorized approval or rejection. Check RAG retrieval/cache, saved work, theme switching, keyboard tabs, and the original diagnostic disclosure on errors. Follow [the beginner walkthrough](BEGINNER_DEMO.md).
 
 The GitHub workflow runs the deterministic coverage gates and offline evaluations on `main` and pull requests. It uploads reports even when a check fails. Live inference is opt-in and is not part of CI.
+
+## Presenter release checks
+
+Use `make check` for the locked AWS-extra Python suite, all four JavaScript modules, lint/format/link checks, and offline evaluations. The first presenter release was checked locally with 156 Python tests, 32 JavaScript tests, 100% application coverage, and 13/13 offline outcomes. See [the release verification record](verification/presenter-release.json) for scope and final evidence.
+
+`python3 scripts/container_smoke.py` requires the Compose app running. It checks real HTTP auth/approval, restarts the container while approval is pending, and verifies recovery and denied replay. Terraform tests use `mock_provider`; they do not create AWS resources. Run `make terraform-check` for all three stacks.
+
+CI also audits the locked runtime dependency set with [exact expiring exceptions](../security/dependency-exceptions.json), scans the built image for fixable HIGH/CRITICAL findings, produces an SBOM, and scans Git history for secrets. Unresolved embedded-only Chroma findings are documented in [security boundaries](SECURITY.md); there is no zero-vulnerabilities claim.
+
+The deployment workflow uses an IAM-authenticated health/durable-configuration probe, with no model inference and no private signing key in GitHub. Run `uv run --extra aws python deploy/manage.py smoke` from the presenter laptop for the separate billed Bedrock role/approval check. Native Safari checks observed actual cloud recovery, semantic RAG Fresh → Cache hit, AgentCore/DynamoDB metadata, and both themes. Browser logic coverage does not replace those checks or establish a device/accessibility audit.

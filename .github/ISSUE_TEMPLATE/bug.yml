@@ -1,0 +1,21 @@
+name: Bug report
+description: Report a reproducible failure using synthetic data.
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps and observed result
+      description: Include the command, expected result, and actual result. Remove credentials and private data.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit or release
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, uv/Python or Docker version, provider, and local versus AgentCore mode.

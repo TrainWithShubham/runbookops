@@ -1,0 +1,22 @@
+name: runbookops
+services:
+  app:
+    build:
+      context: .
+      target: local
+    image: runbookops:local
+    ports:
+      - "127.0.0.1:8006:8000"
+    environment:
+      RUNBOOKOPS_MODE: offline
+      RUNBOOKOPS_EMBEDDING: hash
+    volumes:
+      - state:/app/.state
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 20s
+volumes:
+  state:

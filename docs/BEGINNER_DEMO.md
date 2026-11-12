@@ -34,7 +34,7 @@ Press Search on the right. The results are passages from documents, not an AI-ge
 
 Open **Examples → Suggest a fix, then ask me**:
 
-> Checkout is not working. Suggest a fix, but ask a person before changing anything.
+> Checkout is not working. Read the logs and runbook, then prepare a fix for a person to approve.
 
 Read the old and new payment addresses, risk, and undo value. Try approving as Bagha: the server blocks it. Review as Jethalal, check the review box, and approve. Checkout should report HTTP 200, meaning it is working. A rejection leaves the practice service unchanged.
 

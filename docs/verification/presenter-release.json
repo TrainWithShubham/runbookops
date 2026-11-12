@@ -1,0 +1,63 @@
+{
+  "version": "2.1.0",
+  "recorded_at": "2026-11-12T13:02:06.526913+00:00",
+  "python_tests": 156,
+  "python_application_coverage": {
+    "statements_percent": 100,
+    "branches_percent": 100,
+    "statements": 1661,
+    "branches": 436,
+    "excluded_lines": 0
+  },
+  "javascript_tests": 32,
+  "javascript_application_coverage": {
+    "statements_percent": 100,
+    "branches_percent": 100,
+    "functions_percent": 100,
+    "lines_percent": 100
+  },
+  "offline_evaluations_passed": 13,
+  "terraform_tests_passed": 4,
+  "container_restart_approval_smoke": true,
+  "agentcore_live_smoke": {
+    "verified_at": "2026-11-12T12:51:03.912174+00:00",
+    "backend": "agentcore",
+    "denied_viewer": true,
+    "verified_http_status": 200,
+    "separate_runtime_sessions": true,
+    "stream_event_types": [
+      "complete",
+      "connected",
+      "event",
+      "incident"
+    ],
+    "mcp_tools": [
+      "get_service_health",
+      "get_recent_logs",
+      "get_recent_deployments",
+      "search_runbooks",
+      "prepare_change",
+      "read_cloudwatch_logs"
+    ],
+    "incident_id": "gada-83673c2ec4f2",
+    "model_calls": 2
+  },
+  "safari_observations": [
+    "recovered cloud incident, stored approval and HTTP 200",
+    "AgentCore backend and DynamoDB checkpoint metadata",
+    "semantic RAG query showed Fresh then Cache hit",
+    "dark/light themes inspected; restored dark"
+  ],
+  "dependency_review": {
+    "fastmcp": "upgraded to 3.4.11",
+    "removed_vulnerable_transitive_dependency": "diskcache",
+    "unresolved_chroma_advisories": 4,
+    "exceptions": "security/dependency-exceptions.json"
+  },
+  "limits": [
+    "Live model checks are samples, not a reliability benchmark.",
+    "Moto, contract tests and JSDOM cover their documented scopes.",
+    "Phone-sized layouts and other native browsers were not rechecked.",
+    "GitHub CI/deployment and package release status are recorded after publication."
+  ]
+}

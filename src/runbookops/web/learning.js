@@ -1,5 +1,6 @@
 // Friendly labels sit beside the real events; they never replace API authorization or validation.
 export const toolNames = {
+  read_cloudwatch_logs: "Read AWS sample logs",
   get_service_health: "Check checkout",
   get_recent_logs: "Read error logs",
   get_recent_deployments: "Check the last change",
@@ -28,12 +29,12 @@ export function explainError(value) {
   if (/429|quota|rate.limit|throttl/i.test(text))
     return [
       "The AI service is busy or has reached its limit.",
-      "Wait a little, then press Run again. Your instructor can check the account limit.",
+      "Wait a little, then press Run again. Check the account limit if this continues.",
     ];
   if (/timed?\s*out|timeout/i.test(text))
     return [
       "The AI took too long to reply.",
-      "Press Run to try a new task. If it keeps happening, ask your instructor to check the model.",
+      "Press Run to try a new task. If it keeps happening, check the model connection.",
     ];
   if (
     /401|access token|token.*expired|token.*invalid|connect again|bearer access/i.test(
@@ -51,7 +52,7 @@ export function explainError(value) {
   )
     return [
       "The app cannot access this AWS model.",
-      "Ask your instructor to check Bedrock permissions and model access.",
+      "Check Bedrock permissions and model access.",
     ];
   if (
     /403|lacks.*permission|not.*authorized|cannot approve|access.denied/i.test(
@@ -75,12 +76,12 @@ export function explainError(value) {
   if (/key|credential|model access/i.test(text))
     return [
       "The AI connection needs to be set up.",
-      "Ask your instructor to check the provider key or AWS access.",
+      "Check the provider key or AWS access.",
     ];
   if (/network|connect|fetch|provider|502|503|unavailable/i.test(text))
     return [
       "We could not reach the AI service.",
-      "Check the connection and try again. Your instructor can check the service if this continues.",
+      "Check the connection and try again. Inspect the service status if this continues.",
     ];
   if (/stopped|cancelled|abort/i.test(text))
     return [
@@ -89,6 +90,6 @@ export function explainError(value) {
     ];
   return [
     "This step could not finish.",
-    "Open Technical details below, or ask your instructor for help.",
+    "Open Technical details below to see what happened.",
   ];
 }

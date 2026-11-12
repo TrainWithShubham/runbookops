@@ -1,5 +1,6 @@
 """The agent sees only these bounded operational capabilities."""
 
+import os
 import time
 
 from .security import InvalidChange, redact, require
@@ -76,6 +77,19 @@ SCHEMAS = [
 ]
 
 
+def schemas():
+    if os.getenv("RUNBOOKOPS_CLOUDWATCH_LOG_GROUP", ""):
+        return SCHEMAS + [
+            schema(
+                "read_cloudwatch_logs",
+                "Read up to 20 sanitized entries from the configured AWS sample log group, over the last 15 minutes. Read-only; separate from simulator evidence.",
+                {},
+                [],
+            )
+        ]
+    return SCHEMAS
+
+
 class Tools:
     def __init__(self, store, retriever, actor, incident):
         self.store, self.retriever, self.actor, self.incident = store, retriever, actor, incident
@@ -89,7 +103,7 @@ class Tools:
         self.steps += 1
         if self.steps > MAX_TOOL_STEPS:
             raise InvalidChange("Tool step budget exceeded")
-        definition = next((s["function"] for s in SCHEMAS if s["function"]["name"] == name), None)
+        definition = next((s["function"] for s in schemas() if s["function"]["name"] == name), None)
         if definition is None:
             raise InvalidChange("Tool is not in the read/propose allowlist")
         import jsonschema
@@ -119,6 +133,10 @@ class Tools:
                 "change": {"key": "PAYMENT_SERVICE_URL", "before": "http://payments:9000", "after": BAD_URL},
             }
             self.observed.add(name)
+        elif name == "read_cloudwatch_logs":
+            from .cloudwatch import read_logs
+
+            result = read_logs()
         elif name == "search_runbooks":
             result = self.retriever.search(arguments["query"], self.actor)
             self.sources.update(item["source"] for item in result["results"])

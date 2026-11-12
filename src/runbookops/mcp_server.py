@@ -1,5 +1,7 @@
 """MCP transport for the same operational tools used by RunbookOps."""
 
+import os
+
 from fastmcp import FastMCP
 
 from .auth import Auth
@@ -69,6 +71,13 @@ def create_server(settings, local_actor=None):
         return context(incident_id).call(
             "prepare_change", {"service": service, "key": key, "value": value, "evidence": evidence}
         )
+
+    if os.getenv("RUNBOOKOPS_CLOUDWATCH_LOG_GROUP", ""):
+
+        @server.tool
+        def read_cloudwatch_logs(incident_id: str) -> dict:
+            """Read bounded CloudWatch sample logs; never modifies AWS resources."""
+            return context(incident_id).call("read_cloudwatch_logs", {})
 
     return server, store
 

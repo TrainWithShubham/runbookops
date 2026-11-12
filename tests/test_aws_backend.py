@@ -2,11 +2,13 @@ import dataclasses
 
 import boto3
 import pytest
+from fastapi.testclient import TestClient
 from moto import mock_aws
 
 pytest.importorskip("langgraph_checkpoint_aws")
 
 from runbookops.agent import Engine
+from runbookops.api import create_app
 from runbookops.security import Denied, principal
 
 
@@ -43,6 +45,21 @@ async def test_dynamodb_checkpoint_and_approval_across_engines(settings, monkeyp
         with pytest.raises(Denied):
             engine.store.apply(p["id"], principal("bagha"))
         engine.close()
+        # DynamoDB proposal IDs contain colons; the runtime bridge must preserve this backend contract.
+        app = create_app(cloud)
+        with TestClient(app) as client:
+            denied = client.post(
+                "/invocations",
+                headers={"Authorization": "Bearer " + app.state.auth.issue("bagha")},
+                json={
+                    "operation": "request",
+                    "method": "POST",
+                    "path": f"/proposals/{p['id']}/decision",
+                    "body": {"expected_hash": p["hash"], "approve": True},
+                },
+            )
+            assert denied.status_code == 200
+            assert denied.json()["status_code"] == 403
         engine = Engine(cloud)
         done = await engine.decide(p["id"], principal("jethalal"), p["hash"], True)
         assert done["health"]["http_status"] == 200

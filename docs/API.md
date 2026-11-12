@@ -67,3 +67,9 @@ Run `uv run runbookops serve --demo-auth --port 8002`, then open `http://127.0.0
 | `POST /ui/session` | Explicitly enabled, direct-loopback-only development JWT issuance |
 
 The stream records public model content, requested tool names/arguments, tool results, and node events. It excludes hidden reasoning and provider credentials. Disconnecting the stream cancels the in-progress read-only investigation; it cannot approve or apply a change.
+
+## Presenter transport
+
+The loopback-only presenter preserves the application's HTTP contracts for harness inspection, RAG, incident state, and decisions. Requests are encoded into an allowlisted `request` invocation, authenticated with IAM and the original actor's scoped demo identity. Streamed investigations use SSE at the runtime boundary and translate the real events into the local UI's NDJSON contract. Arbitrary paths, the local issuer, and recursive `/invocations` requests are not allowed through this transport.
+
+A `health` runtime invocation returns only service status and whether durable storage is configured. CI uses it without an application token after AWS IAM admission. It does not request inference or expose operational data. See [AWS deployment](AWS.md).

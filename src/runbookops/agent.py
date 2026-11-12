@@ -17,7 +17,7 @@ from .mcp_server import create_server
 from .models import SYSTEM, Model, ModelError
 from .security import Denied, InvalidChange, redact, require
 from .store import open_store
-from .tools import MAX_TOOL_STEPS, SCHEMAS
+from .tools import MAX_TOOL_STEPS, schemas
 
 INVESTIGATION_TIMEOUT = 150
 
@@ -94,7 +94,7 @@ class Engine:
                 async with asyncio.timeout(INVESTIGATION_TIMEOUT):
                     async with tool_client(self.settings, actor, self.transport) as client:
                         discovered = {tool.name for tool in await client.list_tools()}
-                        if not {t["function"]["name"] for t in SCHEMAS}.issubset(discovered):
+                        if not {t["function"]["name"] for t in schemas()}.issubset(discovered):
                             raise ModelError("MCP server is missing a required workshop tool")
                         self.store.event(
                             state["incident_id"],
@@ -108,9 +108,9 @@ class Engine:
                                 "model_request",
                                 turn=calls + 1,
                                 message_count=len(messages),
-                                tool_count=len(SCHEMAS),
+                                tool_count=len(schemas()),
                             )
-                            message, metadata = await self.model.complete(messages, SCHEMAS)
+                            message, metadata = await self.model.complete(messages, schemas())
                             calls += 1
                             self.store.event(
                                 state["incident_id"],
@@ -148,7 +148,9 @@ class Engine:
                                         {
                                             "role": "user",
                                             "content": (
-                                                "Check completion against the original task. Finish any missing health, logs, "
+                                                "Check completion against the original task. No saved proposal exists for this incident. "
+                                                "Any earlier failed prepare_change call did not create one. A source ID or a written "
+                                                "recommendation is not a proposal ID. Finish any missing health, logs, "
                                                 "deployment, and current-runbook checks using the provided tools. If the user "
                                                 "requested a fix and the evidence supports it, call prepare_change to save the "
                                                 "suggestion. That tool does not apply a change. If the current checkout-runbook "
@@ -164,7 +166,7 @@ class Engine:
                                 if tool_steps > MAX_TOOL_STEPS:
                                     raise ModelError("Tool step limit reached")
                                 name = call.get("function", {}).get("name", "")
-                                if name not in {t["function"]["name"] for t in SCHEMAS}:
+                                if name not in {t["function"]["name"] for t in schemas()}:
                                     result = {"error": "Tool outside the investigation allowlist"}
                                 else:
                                     try:
@@ -173,7 +175,7 @@ class Engine:
 
                                         spec = next(
                                             t["function"]["parameters"]
-                                            for t in SCHEMAS
+                                            for t in schemas()
                                             if t["function"]["name"] == name
                                         )
                                         jsonschema.validate(arguments, spec)
@@ -209,7 +211,13 @@ class Engine:
                                                 else "Check the tool input schema and use only permitted arguments."
                                             ),
                                         }
-                                        self.store.event(state["incident_id"], "tool_error", tool=name)
+                                        self.store.event(
+                                            state["incident_id"],
+                                            "tool_error",
+                                            tool=name,
+                                            message=result["error"],
+                                            next_step=result["next_step"],
+                                        )
                                 messages.append(
                                     {
                                         "role": "tool",

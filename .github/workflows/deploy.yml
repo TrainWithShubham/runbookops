@@ -1,0 +1,78 @@
+name: Deploy presenter
+run-name: Deploy presenter by @${{ github.actor }}
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: presenter-deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: presenter
+    env:
+      AWS_REGION: us-west-2
+      RUNBOOKOPS_PRESENTER_PUBLIC_KEY: ${{ vars.RUNBOOKOPS_PUBLIC_KEY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.10.2'
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: '1.15.8'
+          terraform_wrapper: false
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-west-2
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Check public identity configuration
+        run: |
+          test -n "$RUNBOOKOPS_PRESENTER_PUBLIC_KEY"
+          test -n "$TF_STATE_BUCKET"
+        env:
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      - run: uv sync --frozen --extra aws
+      - name: Initialize remote state
+        run: terraform -chdir=infra/terraform/presenter init -input=false -backend-config="bucket=$TF_STATE_BUCKET" -backend-config=region=us-west-2
+        env:
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      - name: Discover selected model and write ignored configuration
+        run: uv run --extra aws python deploy/manage.py configure
+      - name: Publish immutable runtime image
+        run: uv run --extra aws python deploy/manage.py publish --tag "$GITHUB_SHA"
+      - name: Scan the image to deploy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.2
+          image-ref: '${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com/runbookops-presenter:${{ github.sha }}'
+          format: json
+          output: artifacts/runtime-vulnerabilities.json
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+      - name: Plan and apply reviewed source
+        run: |
+          terraform -chdir=infra/terraform/presenter plan -input=false -out=deploy.tfplan
+          terraform -chdir=infra/terraform/presenter apply -input=false deploy.tfplan
+      - name: Adopt service-created runtime logs and enforce retention
+        run: uv run --extra aws python deploy/manage.py logs
+        env:
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      - name: IAM-authenticated runtime health probe (no model inference)
+        run: uv run --extra aws python deploy/manage.py probe
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: presenter-deployment-reports
+          path: |
+            artifacts/presenter-cloud-smoke.json
+            artifacts/runtime-vulnerabilities.json
+          if-no-files-found: warn

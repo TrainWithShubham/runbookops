@@ -33,7 +33,7 @@ async def test_agent_failures_stop_without_change(settings, monkeypatch, fault):
             return (
                 []
                 if fault == "no-tools"
-                else [SimpleNamespace(name=t["function"]["name"]) for t in agent.SCHEMAS]
+                else [SimpleNamespace(name=t["function"]["name"]) for t in agent.schemas()]
             )
 
         async def call_tool(self, *a, **kw):

@@ -1,0 +1,34 @@
+[
+  {
+    "package": "chromadb",
+    "version": "1.5.9",
+    "advisory": "PYSEC-2026-311",
+    "review_by": "2026-12-12",
+    "reason": "Embedded PersistentClient only; no Chroma HTTP server, SimpleRBAC provider, collection mutation endpoint, user-selected embedding repository, or trust_remote_code option is exposed. RunbookOps applies its own retrieval authorization before returning context. Reassess before adding remote Chroma or user-provided model configuration.",
+    "reference": "https://github.com/advisories/GHSA-f4j7-r4q5-qw2c"
+  },
+  {
+    "package": "chromadb",
+    "version": "1.5.9",
+    "advisory": "PYSEC-2026-3814",
+    "review_by": "2026-12-12",
+    "reason": "Embedded PersistentClient only; no Chroma HTTP server, SimpleRBAC provider, collection mutation endpoint, user-selected embedding repository, or trust_remote_code option is exposed. RunbookOps applies its own retrieval authorization before returning context. Reassess before adding remote Chroma or user-provided model configuration.",
+    "reference": "https://github.com/advisories/GHSA-36p7-vc44-83pf"
+  },
+  {
+    "package": "chromadb",
+    "version": "1.5.9",
+    "advisory": "PYSEC-2026-3815",
+    "review_by": "2026-12-12",
+    "reason": "Embedded PersistentClient only; no Chroma HTTP server, SimpleRBAC provider, collection mutation endpoint, user-selected embedding repository, or trust_remote_code option is exposed. RunbookOps applies its own retrieval authorization before returning context. Reassess before adding remote Chroma or user-provided model configuration.",
+    "reference": "https://github.com/advisories/GHSA-xph7-9rjv-w5fr"
+  },
+  {
+    "package": "chromadb",
+    "version": "1.5.9",
+    "advisory": "PYSEC-2026-3813",
+    "review_by": "2026-12-12",
+    "reason": "Embedded PersistentClient only; no Chroma HTTP server, SimpleRBAC provider, collection mutation endpoint, user-selected embedding repository, or trust_remote_code option is exposed. RunbookOps applies its own retrieval authorization before returning context. Reassess before adding remote Chroma or user-provided model configuration.",
+    "reference": "https://github.com/advisories/GHSA-2wm9-hf6c-p5cr"
+  }
+]

@@ -24,7 +24,7 @@ const presets = [
   ],
   [
     "Suggest a fix",
-    "Checkout is not working. Suggest a fix, but ask a person before changing anything.",
+    "Checkout is not working. Read the logs and runbook, then prepare a fix for a person to approve.",
   ],
 ];
 const S = {
@@ -427,6 +427,7 @@ function harnessView() {
       ["Summary", h.routing.summarize],
       ["Output tokens", h.limits.output_tokens],
       ["Checkpoint", h.checkpoint],
+      ["Agent backend", S.config.backend],
     ],
   )}</div></details><details class="inspect-details" data-key="graph-json"><summary>${icon("code")} LangGraph</summary><div><div class="flow-nodes">${h.graph.nodes
     .filter((n) => !n.id.startsWith("__"))

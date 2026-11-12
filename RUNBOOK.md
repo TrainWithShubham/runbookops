@@ -176,3 +176,9 @@ Open **Examples** above the conversation for ten guided examples. Select a card,
 ## Verify the complete app
 
 Follow [Testing and coverage](docs/TESTING.md) to run both 100% application coverage gates, offline evaluations, and the separately authorized live Bedrock scenarios.
+
+## Presenter mode and containers
+
+For the local UI connected to an AWS-hosted agent, follow [the Terraform presenter guide](docs/AWS.md), then run `uv run runbookops present --runtime-arn YOUR_RUNTIME_ARN` and open port 8005. This keeps your browser local while cloud evidence and approval state come from AgentCore/DynamoDB. The existing `--mode bedrock serve` command instead runs the agent locally and uses only Bedrock inference.
+
+For a reproducible offline container on port 8006, use [Docker Compose](docs/CONTAINERS.md). The uv path remains the shortest setup and supports the local persona picker.

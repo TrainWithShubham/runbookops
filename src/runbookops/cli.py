@@ -1,8 +1,9 @@
-"""Workshop commands. Local --as identities are development shortcuts, not remote authentication."""
+"""Application commands. Local --as identities are development shortcuts, not remote authentication."""
 
 import argparse
 import asyncio
 import json
+import os
 import platform
 import sys
 from pathlib import Path
@@ -212,6 +213,10 @@ def parser():
         default=None,
         help="Enable loopback-only development persona login for the browser UI",
     )
+    present = sub.add_parser("present", help="Run a loopback-only UI connected to AgentCore")
+    present.add_argument("--runtime-arn", default=os.getenv("RUNBOOKOPS_AGENTCORE_ARN", ""))
+    present.add_argument("--qualifier", default="presenter")
+    present.add_argument("--port", type=int, default=8005)
     evaluation = sub.add_parser("evaluate")
     evaluation.add_argument("--output", default="artifacts/evaluation.json")
     return p
@@ -220,15 +225,22 @@ def parser():
 def main():
     args = parser().parse_args()
     try:
-        if args.command == "serve":
+        if args.command in ("serve", "present"):
             import uvicorn
 
             from .api import create_app
 
-            settings = Settings.load(
-                args.env_file, mode=args.mode, embedding=args.embedding, ui_demo_auth=args.demo_auth
-            )
-            uvicorn.run(create_app(settings), host="127.0.0.1", port=args.port)
+            if args.command == "present":
+                from .presenter import create_presenter_app
+
+                settings = Settings.load(args.env_file, mode="bedrock", ui_demo_auth=True)
+                app = create_presenter_app(settings, args.runtime_arn, args.qualifier)
+            else:
+                settings = Settings.load(
+                    args.env_file, mode=args.mode, embedding=args.embedding, ui_demo_auth=args.demo_auth
+                )
+                app = create_app(settings)
+            uvicorn.run(app, host="127.0.0.1", port=args.port)
         else:
             asyncio.run(execute(args))
     except (Denied, InvalidChange, ModelError, ValueError) as error:

@@ -1,4 +1,4 @@
-"""Same-origin workshop UI. Development persona issuance is explicit and loopback-only."""
+"""Same-origin harness UI. Development persona issuance is explicit and loopback-only."""
 
 import asyncio
 import json
@@ -15,7 +15,7 @@ from .agent import INVESTIGATION_TIMEOUT, tool_client
 from .models import SYSTEM
 from .rag import CACHE_TTL, CHUNK_OVERLAP, CHUNK_SIZE, EMBEDDING_MODEL, Retriever, extract
 from .security import Denied, redact, require
-from .tools import MAX_TOOL_STEPS, SCHEMAS
+from .tools import MAX_TOOL_STEPS, schemas
 
 
 class Persona(BaseModel):
@@ -28,18 +28,13 @@ class Investigation(BaseModel):
     question: str = Field(min_length=1, max_length=1200)
 
 
-def install_ui(app, settings, engine, auth, caller):
+def install_shell(app, settings, auth, model, backend="Local"):
+
     assets = Path(__file__).parent / "web"
     app.mount("/assets", StaticFiles(directory=assets), name="ui-assets")
-    retriever = Retriever(settings)
 
     def demo_enabled():
         return settings.ui_demo_auth and not auth.external and os.getenv("RUNBOOKOPS_CLOUD") != "true"
-
-    def sources(actor):
-        require(actor, "read")
-        _, manifest = retriever.fingerprint()
-        return [s for s in manifest if s["current"] and s["access"] in ("public", actor.role)]
 
     def loopback(request):
         return (
@@ -67,8 +62,9 @@ def install_ui(app, settings, engine, auth, caller):
         return JSONResponse(
             {
                 "mode": settings.mode,
+                "backend": backend,
                 "embedding": settings.embedding,
-                "model": engine.model.route("diagnose") or "Deterministic practice",
+                "model": model.route("diagnose") or "Deterministic practice",
                 "demo_auth": demo_enabled() and loopback(request),
                 "max_calls": settings.max_calls,
             },
@@ -98,6 +94,16 @@ def install_ui(app, settings, engine, auth, caller):
             headers={"Cache-Control": "no-store"},
         )
 
+
+def install_ui(app, settings, engine, auth, caller):
+    install_shell(app, settings, auth, engine.model)
+    retriever = Retriever(settings)
+
+    def sources(actor):
+        require(actor, "read")
+        _, manifest = retriever.fingerprint()
+        return [s for s in manifest if s["current"] and s["access"] in ("public", actor.role)]
+
     @app.get("/harness")
     async def harness(actor=Depends(caller)):
         require(actor, "read")
@@ -118,7 +124,7 @@ def install_ui(app, settings, engine, auth, caller):
                 "output_tokens": settings.max_tokens,
                 "timeout_seconds": INVESTIGATION_TIMEOUT,
             },
-            "tools": SCHEMAS,
+            "tools": schemas(),
             "graph": topology,
             "mcp": {"transport": "http" if settings.mcp_url else engine.transport},
             "rag": {
@@ -181,48 +187,52 @@ def install_ui(app, settings, engine, auth, caller):
 
     @app.post("/investigations/stream")
     async def stream(body: Investigation, actor=Depends(caller)):
-        require(actor, "investigate")
+        return await stream_investigation(engine, body.question, actor)
 
-        async def events():
-            incident = None
-            offset = 0
-            announced = False
 
-            def created(value):
-                nonlocal incident
-                incident = value
+async def stream_investigation(engine, question, actor):
+    require(actor, "investigate")
 
-            def line(kind, data):
-                return json.dumps({"type": kind, "data": redact(data)}) + "\n"
+    async def events():
+        incident = None
+        offset = 0
+        announced = False
 
-            task = asyncio.create_task(engine.start(actor, body.question, on_created=created))
-            try:
-                yield line("connected", {"mode": settings.mode})
-                while True:
-                    await asyncio.wait({task}, timeout=0.4)
-                    if incident:
-                        if not announced:
-                            yield line("incident", {"incident_id": incident})
-                            announced = True
-                        recorded = engine.store.events(incident, actor)
-                        for item in recorded[offset:]:
-                            yield line("event", item)
-                        offset = len(recorded)
-                    if task.done():
-                        state = await task
-                        yield line("complete", state)
-                        break
-            except Exception as error:
-                yield line("error", {"message": str(error)})
-            finally:
-                if not task.done():
-                    task.cancel()
-                    await asyncio.gather(task, return_exceptions=True)
-                    if incident:
-                        engine.store.event(incident, "investigation_cancelled", actor=actor.user)
+        def created(value):
+            nonlocal incident
+            incident = value
 
-        return StreamingResponse(
-            events(),
-            media_type="application/x-ndjson",
-            headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
-        )
+        def line(kind, data):
+            return json.dumps({"type": kind, "data": redact(data)}) + "\n"
+
+        task = asyncio.create_task(engine.start(actor, question, on_created=created))
+        try:
+            yield line("connected", {"mode": engine.settings.mode})
+            while True:
+                await asyncio.wait({task}, timeout=0.4)
+                if incident:
+                    if not announced:
+                        yield line("incident", {"incident_id": incident})
+                        announced = True
+                    recorded = engine.store.events(incident, actor)
+                    for item in recorded[offset:]:
+                        yield line("event", item)
+                    offset = len(recorded)
+                if task.done():
+                    state = await task
+                    yield line("complete", state)
+                    break
+        except Exception as error:
+            yield line("error", {"message": str(error)})
+        finally:
+            if not task.done():
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+                if incident:
+                    engine.store.event(incident, "investigation_cancelled", actor=actor.user)
+
+    return StreamingResponse(
+        events(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )

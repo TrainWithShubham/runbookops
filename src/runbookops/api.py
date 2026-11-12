@@ -3,12 +3,13 @@
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field
 
 from .agent import Engine
 from .auth import Auth
+from .bridge import allowed_request
 from .config import Settings
 from .security import Denied, InvalidChange, require
 
@@ -26,14 +27,19 @@ class Decision(BaseModel):
 
 class Invocation(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    operation: str = Field(pattern="^(investigate|status|decide|resume)$")
+    operation: str = Field(pattern="^(investigate|status|decide|resume|request|stream|health)$")
     question: str = Field(
-        default="Investigate checkout HTTP 503 and prepare the documented correction.", max_length=1200
+        default="Investigate checkout HTTP 503 and prepare the documented correction.",
+        min_length=1,
+        max_length=1200,
     )
     incident_id: str | None = None
     proposal_id: str | None = None
     expected_hash: str | None = None
     approve: bool = False
+    method: str = "GET"
+    path: str = ""
+    body: dict | None = None
 
 
 def create_app(settings=None):
@@ -46,12 +52,13 @@ def create_app(settings=None):
         yield
         engine.close()
 
-    app = FastAPI(title="RunbookOps", version="2.0.0", lifespan=lifespan)
+    app = FastAPI(title="RunbookOps", version="2.1.0", lifespan=lifespan)
     app.state.engine = engine
     app.state.auth = auth
     bearer = HTTPBearer(auto_error=False)
 
     def caller(
+        request: Request,
         credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
         workshop_token: str | None = Header(default=None, alias="X-RunbookOps-Token"),
     ):
@@ -61,7 +68,9 @@ def create_app(settings=None):
         if not token:
             raise HTTPException(401, "Bearer access token required", headers={"WWW-Authenticate": "Bearer"})
         try:
-            return auth.verify(token)
+            actor = auth.verify(token)
+            request.state.access_token = token
+            return actor
         except Denied:
             raise HTTPException(
                 401, "Invalid or expired access token", headers={"WWW-Authenticate": "Bearer"}
@@ -126,8 +135,38 @@ def create_app(settings=None):
         return await engine.resume(incident_id, actor)
 
     @app.post("/invocations")
-    async def invoke(body: Invocation, actor=Depends(caller)):
+    async def invoke(body: Invocation, request: Request, credentials=Depends(bearer)):
+        if body.operation == "health":
+            return {**health(), "durable_state": bool(settings.dynamodb_table or settings.database_url)}
+        actor = caller(request, credentials, request.headers.get("X-RunbookOps-Token"))
         # App JWT validation remains active behind Runtime admission authentication.
+        if body.operation == "stream":
+            from .ui import Investigation, stream_investigation
+
+            question = Investigation(question=body.question)
+            from fastapi.responses import StreamingResponse
+
+            response = await stream_investigation(engine, question.question, actor)
+
+            async def sse_events():
+                async for line in response.body_iterator:
+                    yield "data: " + line.rstrip("\n") + "\n\n"
+
+            return StreamingResponse(sse_events(), media_type="text/event-stream")
+        if body.operation == "request":
+            import httpx
+
+            if not allowed_request(body.method, body.path):
+                raise HTTPException(422, "Route is not allowed through the runtime bridge")
+            # Keep normal route validation and authorization active inside the runtime.
+            token = request.state.access_token
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app), base_url="http://runtime"
+            ) as client:
+                response = await client.request(
+                    body.method, body.path, json=body.body, headers={"Authorization": "Bearer " + token}
+                )
+            return {"status_code": response.status_code, "body": response.json()}
         if body.operation == "investigate":
             return await engine.start(actor, body.question)
         if body.operation == "status" and body.incident_id:

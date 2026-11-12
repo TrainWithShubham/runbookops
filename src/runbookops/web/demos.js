@@ -61,7 +61,7 @@ export const demos = [
     icon: "check",
     kind: "task",
     prompt:
-      "Checkout is not working. Suggest a fix, but ask a person before changing anything.",
+      "Checkout is not working. Read the logs and runbook, then prepare a fix for a person to approve.",
     observe:
       "Read the old and new payment addresses. Bagha can ask for a fix; Jethalal can approve it. Approve to apply it, or reject to leave the service unchanged.",
   },

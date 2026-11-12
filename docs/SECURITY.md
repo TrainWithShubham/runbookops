@@ -51,3 +51,13 @@ The browser's development persona picker requires `serve --demo-auth` (or the ex
 Development tokens remain in browser memory. Only theme preference, persona preference, and recent incident IDs/statuses are stored locally. Changing persona clears old content and rechecks incident/source access on the server. Model keys and private signing material are never sent to the UI. The root page sets a same-origin CSP; fonts and the supplied logo are served locally.
 
 This explicit local shortcut has the same trust boundary as the CLI persona flags: someone controlling the laptop can exercise all teaching identities. It is not production user authentication.
+
+## Presenter release and dependency review
+
+The presenter bridge rejects non-loopback clients/hosts and mismatched browser origins before handling application requests. It forwards only an explicit route/method allowlist through IAM-signed AgentCore invocations. Operational runtime routes validate the original signed caller token again. The `health` invocation exposes service health/durable-configuration status without an application JWT; AgentCore still requires IAM admission for that cloud request. It reveals no incident, document, tool result, or provider credential.
+
+The CI deployment role receives no demo private signing key. Its runtime probe uses IAM and performs no model inference. Full role/approval/model checks run separately from the presenter laptop.
+
+The release upgrades FastMCP to the patched 3.x line, also removing the affected transitive DiskCache dependency. Four unresolved Chroma advisories remain in the dependency audit. They concern Chroma's HTTP collection/model configuration and built-in multi-tenant authorization paths: [pre-auth code injection](https://github.com/advisories/GHSA-f4j7-r4q5-qw2c), [collection update injection](https://github.com/advisories/GHSA-36p7-vc44-83pf), [SimpleRBAC scope](https://github.com/advisories/GHSA-xph7-9rjv-w5fr), and [collection authorization](https://github.com/advisories/GHSA-2wm9-hf6c-p5cr).
+
+This application embeds `PersistentClient`; it does not start a Chroma HTTP server, use its built-in RBAC provider, expose collection mutation/model-repository parameters, or enable `trust_remote_code`. Retrieval permissions are enforced by RunbookOps before returning context. The exact package/version/advisory exceptions, rationale, and review dates are recorded in [dependency-exceptions.json](../security/dependency-exceptions.json). The audit fails on new/unreviewed advisories, another package version, or an expired exception. This is a scoped exposure assessment, not a claim that the upstream packages are vulnerability-free. Reassess before changing the retrieval/storage boundary.
