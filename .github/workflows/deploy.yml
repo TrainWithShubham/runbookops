@@ -41,6 +41,7 @@ jobs:
         run: |
           test -n "$RUNBOOKOPS_PRESENTER_PUBLIC_KEY"
           test -n "$TF_STATE_BUCKET"
+          mkdir -p artifacts
         env:
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
       - run: uv sync --frozen --extra aws
