@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+.state/
+.cache/
+.pytest_cache/
+.ruff_cache/
+artifacts/
+site/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Kind cluster config
+kubeconfig
+CLAUDE.md
+
+# Test coverage and frontend development dependencies
+.coverage*
+htmlcov/
+node_modules/
