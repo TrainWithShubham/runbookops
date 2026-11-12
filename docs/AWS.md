@@ -21,7 +21,7 @@ uv run --extra aws python deploy/manage.py configure
 
 The helper discovers the account and inference profile, reuses the local demo issuer key, and writes ignored Terraform variable files. It prints the account and region for review. The public key is saved to `.state/presenter-public.pem`; the private key remains in `.state/dev-issuer.pem`. Keep it to continue issuing the demo identities trusted by this deployment.
 
-A pre-existing GitHub OIDC provider is reused through its ARN; this stack does not alter it. If none exists, bootstrap creates a provider. CI federation is disabled on a new setup unless you explicitly name your own repository. Cloning this public project does not grant its authors access to your AWS account.
+A pre-existing GitHub OIDC provider is reused through its ARN; this stack does not alter it. When CI federation is explicitly enabled and no provider exists, bootstrap creates one. CI federation is disabled on a new setup unless you explicitly name your own repository. Cloning this public project does not grant its authors access to your AWS account.
 
 ## 2. Bootstrap state and CI federation
 
