@@ -1,0 +1,33 @@
+{
+  "project": "runbookops-presenter",
+  "verified_at": "2026-11-12T15:00:59.920391+00:00",
+  "region": "us-west-2",
+  "all_project_resources_absent_except_pending_kms": true,
+  "remaining_project_resources": {
+    "runtimes": [],
+    "repositories": [],
+    "tables": [],
+    "runtime_logs": [],
+    "sample_logs": [],
+    "iam_roles": [],
+    "s3_buckets": []
+  },
+  "workload_identity_absent": true,
+  "kms": {
+    "key_id": "241f1988-f31b-4079-b08a-0ec4110c4b08",
+    "state": "PendingDeletion",
+    "enabled": false,
+    "deletion_date": "2026-11-19T14:59:43.758000+00:00",
+    "billing_reference": "https://aws.amazon.com/kms/pricing/"
+  },
+  "unrelated_runtime_preserved": [
+    {
+      "name": "agent_prod",
+      "status": "READY"
+    }
+  ],
+  "shared_github_oidc_provider_preserved": true,
+  "github_deployment_workflow_disabled": true,
+  "github_deployment_variables_removed": true,
+  "local_aws_connected_servers_stopped": true
+}
