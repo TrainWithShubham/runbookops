@@ -65,3 +65,7 @@ Application coverage remains a separate scope from Terraform, container, native 
 CI federation is opt-in for new installations. A public clone must not silently create an AWS deployment role trusting the original authors' GitHub repository. Bootstrap defaults to no GitHub role/provider, and the configure helper accepts an explicit --github-repository OWNER/REPO while preserving a previous explicit choice. The owner's existing TrainWithShubham/runbookops trust is retained through Terraform moved blocks, without recreating its role.
 
 A transient Docker push failed with a broken network pipe during a large layer upload. Dependency and embedding layers are now separated from frequently changing application files. This also reduces repeat upload/storage work. The build backend, Python base image, runtime dependencies, workflow actions, and scanner executable are pinned. NOTICE is included in both the package and image.
+
+### GitHub immutable OIDC identities
+
+The first GitHub deployment could not assume its role. The repository OIDC API showed GitHub's newer immutable subject prefix, including numeric owner/repository IDs; the original name-only trust correctly denied it. Added explicit subject-prefix configuration and exact repository validation instead of weakening the trust or opting out of immutable identities. The owner deployment uses the observed immutable prefix. Bootstrap tests verify no default CI role/provider and the exact environment-bound immutable subject. ARM64 image builds on the x86 GitHub runner explicitly enable QEMU.

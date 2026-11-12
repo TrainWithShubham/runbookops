@@ -80,6 +80,7 @@ jobs:
       - run: terraform -chdir=infra/terraform/presenter test
       - run: terraform -chdir=infra/terraform/bootstrap init -backend=false -input=false
       - run: terraform -chdir=infra/terraform/bootstrap validate
+      - run: terraform -chdir=infra/terraform/bootstrap test
       - run: terraform -chdir=infra/terraform/logs init -backend=false -input=false
       - run: terraform -chdir=infra/terraform/logs validate
   container:

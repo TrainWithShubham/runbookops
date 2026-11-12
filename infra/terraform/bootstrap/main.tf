@@ -15,6 +15,18 @@ variable "github_repository" {
     error_message = "Name your own GitHub owner/repo explicitly, or leave federation disabled."
   }
 }
+variable "github_subject_prefix" {
+  type        = string
+  default     = ""
+  description = "Exact sub_claim_prefix from GitHub's OIDC API, including immutable IDs when enabled."
+  validation {
+    condition = var.github_subject_prefix == "" || (
+      can(regex("^repo:[A-Za-z0-9_.-]+(@[0-9]+)?/[A-Za-z0-9_.-]+(@[0-9]+)?$", var.github_subject_prefix)) &&
+      replace(var.github_subject_prefix, "/@[0-9]+/", "") == "repo:${var.github_repository}"
+    )
+    error_message = "The exact GitHub subject prefix must identify the selected owner/repo; wildcards are not allowed."
+  }
+}
 variable "github_oidc_provider_arn" {
   type    = string
   default = ""
@@ -73,7 +85,7 @@ resource "aws_s3_bucket_policy" "tls" {
   })
 }
 resource "aws_iam_openid_connect_provider" "github" {
-  count          = var.github_oidc_provider_arn == "" ? 1 : 0
+  count          = var.github_repository != "" && var.github_oidc_provider_arn == "" ? 1 : 0
   url            = "https://token.actions.githubusercontent.com"
   client_id_list = ["sts.amazonaws.com"]
   tags           = { Project = "runbookops" }
@@ -92,7 +104,7 @@ resource "aws_iam_role" "deploy" {
       Condition = {
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub" = "repo:${var.github_repository}:environment:presenter"
+          "token.actions.githubusercontent.com:sub" = "${var.github_subject_prefix != "" ? var.github_subject_prefix : "repo:${var.github_repository}"}:environment:presenter"
         }
       }
       }

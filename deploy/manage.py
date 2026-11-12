@@ -33,7 +33,7 @@ def session(region):
     return boto3.Session(region_name=region)
 
 
-def configure(region, github_repository=None):
+def configure(region, github_repository=None, github_subject_prefix=None):
     sdk = session(region)
     config = Config(connect_timeout=10, read_timeout=30, retries={"total_max_attempts": 3})
     account = sdk.client("sts", config=config).get_caller_identity()["Account"]
@@ -80,6 +80,11 @@ def configure(region, github_repository=None):
                     "region": region,
                     "github_oidc_provider_arn": existing,
                     "github_repository": selected_repository,
+                    "github_subject_prefix": github_subject_prefix
+                    if github_subject_prefix is not None
+                    else previous_bootstrap.get("github_subject_prefix", "")
+                    if selected_repository == previous_bootstrap.get("github_repository", "")
+                    else "",
                 },
                 indent=2,
             )
@@ -299,6 +304,9 @@ def main():
         "--github-repository",
         help="Explicit owner/repo to trust for CI; omitted leaves CI federation disabled on a new setup",
     )
+    configuration.add_argument(
+        "--github-subject-prefix", help="Exact sub_claim_prefix returned by the GitHub OIDC API"
+    )
     commands.add_parser("seed-logs")
     commands.add_parser("logs")
     image = commands.add_parser("publish")
@@ -309,7 +317,7 @@ def main():
     verify.add_argument("--runtime-arn")
     args = parser.parse_args()
     if args.command == "configure":
-        configure(args.region, args.github_repository)
+        configure(args.region, args.github_repository, args.github_subject_prefix)
     elif args.command == "publish":
         publish(args.region, args.tag)
     elif args.command == "logs":

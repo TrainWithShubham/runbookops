@@ -96,10 +96,15 @@ Seeding is an explicit operator command with AWS write access; those permissions
 First fork the repository if you are deploying it under another owner. Explicitly opt into federation, then review/apply the bootstrap plan again:
 
 ```bash
-uv run --extra aws python deploy/manage.py configure --github-repository YOUR_OWNER/YOUR_REPO
+gh api repos/YOUR_OWNER/YOUR_REPO/actions/oidc/customization/sub --jq .sub_claim_prefix
+uv run --extra aws python deploy/manage.py configure \
+  --github-repository YOUR_OWNER/YOUR_REPO \
+  --github-subject-prefix EXACT_PREFIX_FROM_GITHUB
 terraform -chdir=infra/terraform/bootstrap plan -out=ci.tfplan
 terraform -chdir=infra/terraform/bootstrap apply ci.tfplan
 ```
+
+Copy the exact prefix returned by GitHub. New repositories use immutable owner/repository IDs in their subject; a name-only trust will fail. See [GitHub OIDC subject formats](https://docs.github.com/en/actions/reference/security/oidc). The policy requires that exact prefix and the `presenter` environment, with no wildcard.
 
 After local bootstrap/foundation, configure your repository's `presenter` environment to allow deployments only from `main`. Set these environment variables:
 

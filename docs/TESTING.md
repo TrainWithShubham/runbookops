@@ -23,7 +23,7 @@ The gates require:
 - **Python:** 100% statement and branch coverage of every module under `src/runbookops`, including the CLI, providers, auth, API, RAG, MCP, and optional storage adapters.
 - **JavaScript:** 100% statement, branch, function, and line coverage of every `.js` file under `src/runbookops/web`.
 
-No application files or lines are omitted from those scopes. Templates, CSS, fonts, binary assets, instructor deployment scripts, dependencies, and test code are not executable application coverage. Reports stay in the ignored `artifacts/coverage` folder; the recorded verification summary is in `docs/verification/test-coverage.json`.
+No application files or lines are omitted from those scopes. Templates, CSS, fonts, binary assets, instructor deployment scripts, dependencies, and test code are not executable application coverage. Reports stay in the ignored `artifacts/coverage` folder; the recorded verification summary is in [the presenter release record](verification/presenter-release.json).
 
 The Python tests exercise real SQLite transactions, graph checkpoints, mixed-format extraction, Chroma retrieval, stdio MCP, a separate HTTP MCP process with JWT admission, and the HTTP/NDJSON API. DynamoDB uses Moto. PostgreSQL connection and query paths use a local adapter contract test; the PostgreSQL checkpoint path uses a saver contract test. HTTP model providers and Bedrock response conversion use mock transports and SDK Stubber. Semantic embedding vectors use a test double in the deterministic coverage suite.
 

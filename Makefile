@@ -29,5 +29,6 @@ terraform-check:
 	terraform -chdir=infra/terraform/presenter test
 	terraform -chdir=infra/terraform/bootstrap init -backend=false -input=false
 	terraform -chdir=infra/terraform/bootstrap validate
+	terraform -chdir=infra/terraform/bootstrap test
 	terraform -chdir=infra/terraform/logs init -backend=false -input=false
 	terraform -chdir=infra/terraform/logs validate
